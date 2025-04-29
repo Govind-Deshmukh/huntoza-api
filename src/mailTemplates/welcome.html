@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Job Hunt Tracker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .logo {
+      max-width: 180px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #2c3e50;
+      margin-top: 0;
+      font-size: 24px;
+    }
+    h2 {
+      color: #3498db;
+      font-size: 20px;
+      margin-top: 30px;
+    }
+    p {
+      margin: 15px 0;
+      font-size: 16px;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #3498db;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .button:hover {
+      background-color: #2980b9;
+    }
+    .feature {
+      display: flex;
+      margin: 25px 0;
+      align-items: flex-start;
+    }
+    .feature-icon {
+      flex: 0 0 40px;
+      font-size: 24px;
+      color: #3498db;
+      margin-right: 15px;
+      text-align: center;
+    }
+    .feature-text {
+      flex: 1;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 14px;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+    }
+    .social {
+      margin: 20px 0;
+    }
+    .social a {
+      display: inline-block;
+      margin: 0 10px;
+      color: #3498db;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <!-- <img src="{{logoUrl}}" alt="Job Hunt Tracker" class="logo"> -->
+      <h1>Welcome to Job Hunt Tracker!</h1>
+    </div>
+    
+    <p>Hello {{name}},</p>
+    
+    <p>Thank you for joining Job Hunt Tracker! We're excited to help you organize your job search and stay on top of your applications.</p>
+    
+    <p style="text-align: center;">
+      <a href="{{loginUrl}}" class="button" target="_blank">Get Started Now</a>
+    </p>
+    
+    <h2>Here's what you can do with Job Hunt Tracker:</h2>
+    
+    <div class="feature">
+      <div class="feature-icon">📋</div>
+      <div class="feature-text">
+        <strong>Track Applications</strong>
+        <p>Keep all your job applications in one place and never lose track of where you've applied.</p>
+      </div>
+    </div>
+    
+    <div class="feature">
+      <div class="feature-icon">📅</div>
+      <div class="feature-text">
+        <strong>Manage Interviews</strong>
+        <p>Schedule and prepare for interviews with reminders and notes.</p>
+      </div>
+    </div>
+    
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <div class="feature-text">
+        <strong>Analytics Dashboard</strong>
+        <p>See your progress and get insights on your job search efforts.</p>
+      </div>
+    </div>
+    
+    <div class="feature">
+      <div class="feature-icon">👥</div>
+      <div class="feature-text">
+        <strong>Network Management</strong>
+        <p>Organize your professional contacts and networking activities.</p>
+      </div>
+    </div>
+    
+    <p>You're currently on our {{planName}} plan. If you ever need more features, check out our premium options.</p>
+    
+    <p>If you have any questions or need assistance, don't hesitate to contact our support team.</p>
+    
+    <p>Best of luck with your job search!</p>
+    
+    <p>The Job Hunt Tracker Team</p>
+    
+    <div class="footer">
+      <div class="social">
+        <!-- Add your social media links here -->
+        <a href="#">Twitter</a>
+        <a href="#">LinkedIn</a>
+        <a href="#">Instagram</a>
+      </div>
+      <p>© {{currentYear}} Job Hunt Tracker. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

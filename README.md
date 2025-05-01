@@ -26,17 +26,78 @@ This application allows users to:
 ## Project Structure
 
 ```
-src/
-├── config/          # Configuration files
-├── middleware/      # Middleware functions
-├── models/          # Mongoose schemas
-├── utils/           # Utility functions
-├── v1/              # API version 1
-│   ├── controller/  # Route controllers
-│   └── routes/      # Express routes
-├── mailTemplates/   # Email templates
-├── swagger/         # Swagger definitions
-└── index.js         # Entry point
+huntoza-api
+|
+├── Dockerfile
+├── package.json
+├── package-lock.json
+├── README.md
+├── run.sh
+├── src
+│   ├── config
+│   │   └── swagger.js
+│   ├── index.js
+│   ├── mailTemplates
+│   │   ├── notification.html
+│   │   ├── paymentSuccess.html
+│   │   ├── resetPassword.html
+│   │   └── welcome.html
+│   ├── middleware
+│   │   ├── mailService.js
+│   │   └── verifyToken.js
+│   ├── models
+│   │   ├── Analytics.js
+│   │   ├── Contact.js
+│   │   ├── Document.js
+│   │   ├── Job.js
+│   │   ├── Notification.js
+│   │   ├── Plan.js
+│   │   ├── PublicProfile.js
+│   │   ├── Task.js
+│   │   ├── Transaction.js
+│   │   └── User.js
+│   ├── swagger
+│   │   ├── analytics.js
+│   │   ├── auth.js
+│   │   ├── components.js
+│   │   ├── contact.js
+│   │   ├── documents.js
+│   │   ├── jobs.js
+│   │   ├── notifications.js
+│   │   ├── payments.js
+│   │   ├── plans.js
+│   │   ├── profile.js
+│   │   └── tasks.js
+│   ├── utils
+│   │   ├── notificationHelpers.js
+│   │   ├── razerpay.js
+│   │   └── scheduler.js
+│   └── v1
+│       ├── controller
+│       │   ├── analytics.controller.js
+│       │   ├── auth.controller.js
+│       │   ├── contact.controller.js
+│       │   ├── document.controller.js
+│       │   ├── job.controller.js
+│       │   ├── notification.controller.js
+│       │   ├── payment.controller.js
+│       │   ├── plan.controller.js
+│       │   ├── publicProfile.controller.js
+│       │   └── task.controller.js
+│       └── routes
+│           ├── analytics.routes.js
+│           ├── auth.routes.js
+│           ├── contact.routes.js
+│           ├── document.routes.js
+│           ├── job.routes.js
+│           ├── notification.routes.js
+│           ├── payment.routes.js
+│           ├── plan.routes.js
+│           ├── publicProfile.routes.js
+│           └── task.routes.js
+├── temp
+└── uploads
+
 ```
 
 ## Main Features

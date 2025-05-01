@@ -1,0 +1,42 @@
+# Node modules
+node_modules
+npm-debug.log
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Environment variables
+.env
+
+# Git files
+.git
+.gitignore
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Logs
+logs
+*.log
+
+# Uploaded files
+uploads/*
+!uploads/.gitkeep
+
+# Temporary files
+temp/*
+!temp/.gitkeep
+
+# IDE related files
+.idea
+.vscode
+
+# Documentation
+README.md
+LICENSE
+
+# Tests
+__tests__
+coverage

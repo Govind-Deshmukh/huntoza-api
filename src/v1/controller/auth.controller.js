@@ -1,4 +1,107 @@
-// Update the login method to return refreshToken in the response
+const User = require("../../models/User");
+const Plan = require("../../models/Plan");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const { sendMail } = require("../../middleware/mailService");
+
+// Define token lifetime constants
+const ACCESS_TOKEN_LIFETIME = process.env.JWT_LIFETIME || "1d";
+const REFRESH_TOKEN_LIFETIME = process.env.REFRESH_TOKEN_LIFETIME || "7d";
+
+/**
+ * Generate a new refresh token for a user
+ * @param {string} userId - User ID
+ * @returns {Promise<string>} - Generated refresh token
+ */
+const generateRefreshToken = async (userId) => {
+  // Generate a random token
+  const refreshToken = crypto.randomBytes(40).toString("hex");
+
+  // Save the token to the user document
+  await User.findByIdAndUpdate(userId, { refreshToken });
+
+  return refreshToken;
+};
+
+// Register new user
+exports.signup = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already in use",
+      });
+    }
+
+    // Find the free plan
+    const freePlan = await Plan.findOne({ name: "free" });
+    if (!freePlan) {
+      return res.status(500).json({
+        success: false,
+        message: "System error: Free plan not available",
+      });
+    }
+
+    // Create the user with free plan
+    const user = await User.create({
+      name,
+      email,
+      password,
+      currentPlan: freePlan._id,
+    });
+
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: ACCESS_TOKEN_LIFETIME,
+    });
+
+    // Generate refresh token
+    const refreshToken = await generateRefreshToken(user._id);
+
+    // Remove password from response
+    user.password = undefined;
+
+    // Send welcome email
+    try {
+      await sendMail({
+        to: user.email,
+        subject: "Welcome to Job Hunt Tracker",
+        template: "welcome",
+        data: {
+          name: user.name,
+          loginUrl: `${process.env.FRONTEND_URL}/login`,
+          planName: freePlan.name,
+          currentYear: new Date().getFullYear(),
+        },
+      });
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+      // Continue with the response even if email fails
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      user,
+      token,
+      refreshToken,
+    });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Registration failed",
+      error: error.message,
+    });
+  }
+};
+
+// Login user
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -62,7 +165,7 @@ exports.login = async (req, res) => {
   }
 };
 
-// Update the refreshToken method to return the refreshToken in the response
+// Refresh access token
 exports.refreshToken = async (req, res) => {
   try {
     // Get refresh token from request body
@@ -108,7 +211,123 @@ exports.refreshToken = async (req, res) => {
   }
 };
 
-// Update resetPassword method to include refreshToken in response
+// Request password reset
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide your email address",
+      });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      // For security reasons, don't reveal that the email doesn't exist
+      return res.status(200).json({
+        success: true,
+        message:
+          "If your email is registered, you will receive a password reset link",
+      });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(20).toString("hex");
+
+    // Hash token and save to user
+    user.resetPasswordToken = crypto
+      .createHmac("sha256")
+      .update(resetToken)
+      .digest("hex");
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save();
+
+    // Create reset URL
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    // Send email
+    try {
+      await sendMail({
+        to: user.email,
+        subject: "Password Reset - Job Hunt Tracker",
+        template: "resetPassword",
+        data: {
+          name: user.name,
+          resetUrl,
+          currentYear: new Date().getFullYear(),
+        },
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Password reset email sent",
+      });
+    } catch (emailError) {
+      console.error("Reset email error:", emailError);
+
+      // Reset the reset token and expiry
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save();
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not send reset email",
+        error: "Email sending failed",
+      });
+    }
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to process request",
+      error: error.message,
+    });
+  }
+};
+
+// Check if reset token is valid
+exports.checkResetToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Hash the token from URL
+    const resetPasswordToken = crypto
+      .createHmac("sha256")
+      .update(token)
+      .digest("hex");
+
+    // Find user with valid token
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset token",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Token is valid",
+    });
+  } catch (error) {
+    console.error("Check reset token error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to validate token",
+      error: error.message,
+    });
+  }
+};
+
+// Reset password with token
 exports.resetPassword = async (req, res) => {
   try {
     // Get token from params
@@ -164,7 +383,55 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// Update the updatePassword method to include refreshToken in response
+// Get current user profile
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId)
+      .select("-password -refreshToken")
+      .populate("currentPlan", "name");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("Get current user error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve user profile",
+      error: error.message,
+    });
+  }
+};
+
+// Logout user
+exports.logout = async (req, res) => {
+  try {
+    // Clear refresh token in database
+    await User.findByIdAndUpdate(req.user.userId, { refreshToken: null });
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to logout",
+      error: error.message,
+    });
+  }
+};
+
+// Update user password
 exports.updatePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -211,6 +478,58 @@ exports.updatePassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to update password",
+      error: error.message,
+    });
+  }
+};
+
+// Update user profile
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    // Check if email is being changed and if it already exists
+    if (email) {
+      const existingUser = await User.findOne({
+        email,
+        _id: { $ne: req.user.userId },
+      });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already in use by another account",
+        });
+      }
+    }
+
+    // Update fields
+    const updatedFields = {};
+    if (name) updatedFields.name = name;
+    if (email) updatedFields.email = email;
+
+    // Update user
+    const user = await User.findByIdAndUpdate(req.user.userId, updatedFields, {
+      new: true,
+      runValidators: true,
+    }).select("-password -refreshToken");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update profile",
       error: error.message,
     });
   }

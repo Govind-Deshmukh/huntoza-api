@@ -17,7 +17,7 @@ const authRoutes = require("./v1/routes/auth.routes");
 const jobRoutes = require("./v1/routes/job.routes");
 const taskRoutes = require("./v1/routes/task.routes");
 const contactRoutes = require("./v1/routes/contact.routes");
-// const paymentRoutes = require("./v1/routes/payment.routes");
+const paymentRoutes = require("./v1/routes/payment.routes");
 const planRoutes = require("./v1/routes/plan.routes");
 const analyticsRoutes = require("./v1/routes/analytics.routes");
 
@@ -64,13 +64,13 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // API routes
-// app.use("/api/v1/auth", authRoutes);
-// app.use("/api/v1/jobs", jobRoutes);
-// app.use("/api/v1/tasks", taskRoutes);
-// app.use("/api/v1/contacts", contactRoutes);
-// app.use("/api/v1/payments", paymentRoutes);
-// app.use("/api/v1/plans", planRoutes);
-// app.use("/api/v1/analytics", analyticsRoutes);
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/jobs", jobRoutes);
+app.use("/api/v1/tasks", taskRoutes);
+app.use("/api/v1/contacts", contactRoutes);
+app.use("/api/v1/payments", paymentRoutes);
+app.use("/api/v1/plans", planRoutes);
+app.use("/api/v1/analytics", analyticsRoutes);
 
 // Health check route
 app.get("/api/health", (req, res) => {

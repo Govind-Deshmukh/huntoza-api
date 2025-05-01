@@ -30,7 +30,6 @@ huntoza-api
 |
 ├── Dockerfile
 ├── package.json
-├── package-lock.json
 ├── README.md
 ├── run.sh
 ├── src

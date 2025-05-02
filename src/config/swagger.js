@@ -4,10 +4,10 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Job Hunt Tracker API",
+      title: "PursuitPal API",
       version: "1.0.0",
       description:
-        "API documentation for Job Hunt Tracker, a tool that helps job seekers organize their job search process",
+        "API documentation for PursuitPal, a tool that helps job seekers organize their job search process",
     },
     servers: [
       {

@@ -67,7 +67,7 @@ app.use(
   swaggerUi.setup(swaggerSpecs, {
     explorer: true,
     customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "Job Hunt Tracker API Documentation",
+    customSiteTitle: "PursuitPal API Documentation",
   })
 );
 

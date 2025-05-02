@@ -1,4 +1,4 @@
-# Job Hunt Tracker API
+# PursuitPal API
 
 A comprehensive RESTful API for a job hunt tracking application that helps job seekers organize their job search process from start to finish.
 

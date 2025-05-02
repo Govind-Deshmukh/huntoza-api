@@ -1,49 +1,53 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const TransactionSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: "User",
+    required: true,
   },
   plan: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Plan',
-    required: true
+    ref: "Plan",
+    required: true,
   },
   orderId: {
     type: String,
-    required: true
+    required: true,
   },
   paymentId: {
     type: String,
-    default: null
+    default: null,
   },
   razorpaySignature: {
     type: String,
-    default: null
+    default: null,
   },
   amount: {
     type: Number,
-    required: true
+    required: true,
   },
   currency: {
     type: String,
-    default: 'INR'
+    default: "INR",
   },
   status: {
     type: String,
-    enum: ['initiated', 'pending', 'completed', 'failed', 'refunded'],
-    default: 'initiated'
+    enum: ["initiated", "pending", "completed", "failed", "refunded"],
+    default: "initiated",
   },
   paymentMethod: {
     type: String,
-    default: ''
+    default: "",
+  },
+  autoRenew: {
+    type: Boolean,
+    default: true,
   },
   billingType: {
     type: String,
-    enum: ['monthly', 'yearly', 'one-time'],
-    required: true
+    enum: ["monthly", "yearly", "one-time"],
+    required: true,
   },
   billingDetails: {
     name: String,
@@ -55,45 +59,45 @@ const TransactionSchema = new mongoose.Schema({
       city: String,
       state: String,
       postal_code: String,
-      country: String
+      country: String,
     },
-    gst: String // For Indian GST number
+    gst: String, // For Indian GST number
   },
   invoice: {
     number: String,
     url: String,
-    generatedAt: Date
+    generatedAt: Date,
   },
   startDate: {
     type: Date,
-    default: Date.now
+    default: Date.now,
   },
   endDate: {
     type: Date,
-    required: true
+    required: true,
   },
   receipt: {
     type: String,
-    default: ''
+    default: "",
   },
   notes: {
     type: String,
-    default: ''
+    default: "",
   },
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
   },
   updatedAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 // Update the updatedAt field on save
-TransactionSchema.pre('save', function(next) {
+TransactionSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
-module.exports = mongoose.model('Transaction', TransactionSchema);
+module.exports = mongoose.model("Transaction", TransactionSchema);

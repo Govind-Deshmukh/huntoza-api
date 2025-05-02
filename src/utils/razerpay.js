@@ -18,14 +18,44 @@ const razorpay = new Razorpay({
  */
 const createOrder = async (options) => {
   try {
-    const order = await razorpay.orders.create({
-      amount: options.amount, // in paise (INR) or cents (USD)
-      currency: options.currency || "INR",
-      receipt: options.receipt,
-      notes: options.notes || {},
-    });
+    let attempts = 0;
+    const maxAttempts = 3;
+    let lastError = null;
 
-    return order;
+    while (attempts < maxAttempts) {
+      try {
+        const order = await razorpay.orders.create({
+          amount: options.amount,
+          currency: options.currency || "INR",
+          receipt: options.receipt,
+          notes: options.notes || {},
+        });
+        return order;
+      } catch (error) {
+        lastError = error;
+
+        // If rate limited, wait and retry
+        if (error.statusCode === 429) {
+          attempts++;
+          if (attempts < maxAttempts) {
+            // Exponential backoff: 1s, 2s, 4s
+            const delay = Math.pow(2, attempts - 1) * 1000;
+            console.log(
+              `Rate limited by Razorpay. Retrying in ${
+                delay / 1000
+              }s (Attempt ${attempts}/${maxAttempts})`
+            );
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
+        } else {
+          // For other errors, throw immediately
+          throw error;
+        }
+      }
+    }
+
+    // If we've exhausted our retries
+    throw lastError;
   } catch (error) {
     console.error("Razorpay order creation error:", error);
     throw error;

@@ -133,9 +133,13 @@ exports.verifyPayment = async (req, res) => {
     });
 
     if (!isSignatureValid) {
+      // Log suspicious activity
+      console.warn(
+        `Invalid payment signature detected: ${razorpay_payment_id}`
+      );
       return res.status(400).json({
         success: false,
-        message: "Invalid payment signature",
+        message: "Payment verification failed. Invalid signature.",
       });
     }
 
@@ -277,5 +281,38 @@ exports.getPaymentById = async (req, res) => {
       message: "Failed to retrieve payment details",
       error: error.message,
     });
+  }
+};
+
+exports.handleWebhook = async (req, res) => {
+  try {
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const shasum = crypto.createHmac("sha256", secret);
+    shasum.update(JSON.stringify(req.body));
+    const digest = shasum.digest("hex");
+
+    if (digest === req.headers["x-razorpay-signature"]) {
+      // Process the webhook event
+      const event = req.body;
+
+      switch (event.event) {
+        case "payment.authorized":
+          // Handle payment authorized
+          await handlePaymentAuthorized(event.payload.payment.entity);
+          break;
+        case "payment.failed":
+          // Handle payment failed
+          await handlePaymentFailed(event.payload.payment.entity);
+          break;
+        // Handle other events
+      }
+
+      res.status(200).json({ status: "ok" });
+    } else {
+      res.status(401).json({ error: "Invalid signature" });
+    }
+  } catch (error) {
+    console.error("Webhook error:", error);
+    res.status(500).json({ error: "Webhook processing failed" });
   }
 };

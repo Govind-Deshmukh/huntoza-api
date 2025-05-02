@@ -18,4 +18,7 @@ router.get("/history", paymentController.getPaymentHistory);
 // Get payment details by ID
 router.get("/:id", paymentController.getPaymentById);
 
+// Create a new route in src/v1/routes/payment.routes.js
+router.post("/webhook", paymentController.handleWebhook);
+
 module.exports = router;

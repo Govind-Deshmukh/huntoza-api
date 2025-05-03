@@ -1,0 +1,62 @@
+# API GitLab CI/CD Pipeline Configuration
+stages:
+  - build
+  - scan
+  - deploy
+
+variables:
+  API_IMAGE_NAME: $CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHA
+  API_IMAGE_LATEST: $CI_REGISTRY_IMAGE/api:latest
+
+# Build API Docker image
+build:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd src # Assuming the API code is in the src directory
+    - docker build -t $API_IMAGE_NAME -t $API_IMAGE_LATEST .
+    - docker push $API_IMAGE_NAME
+    - docker push $API_IMAGE_LATEST
+  tags:
+    - docker
+
+# Run vulnerability scan on API code
+scan:
+  stage: scan
+  image: registry.gitlab.com/gitlab-org/security-products/analyzers/gemnasium:2
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      dependency_scanning: gl-dependency-scanning-report.json
+  tags:
+    - docker
+  allow_failure: true
+
+# Deploy API to production
+deploy:
+  stage: deploy
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $API_IMAGE_LATEST
+    - docker stop pursuitpal_api || true
+    - docker rm pursuitpal_api || true
+    - docker run -d --name pursuitpal_api -p 5000:5000 $API_IMAGE_LATEST
+  tags:
+    - e2e_prod_server
+  environment:
+    name: production
+  only:
+    - master

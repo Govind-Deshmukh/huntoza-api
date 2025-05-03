@@ -4,7 +4,7 @@ const path = require("path");
 
 // Create email transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
+  host: "mail.pentasynth.com",
   port: process.env.SMTP_PORT,
   secure: process.env.SMTP_SECURE === "true",
   auth: {
@@ -57,12 +57,11 @@ const sendMail = async ({ to, subject, template, data }) => {
     // Load and process template
     if (process.env.EMAIL_ENABLED !== "true") {
       console.log(
-        `[EMAIL DISABLED] Would have sent email to ${options.to}: ${options.subject}`
+        `[EMAIL DISABLED] Would have sent email to ${to}: ${subject}`
       );
       return true; // Return success without sending
     }
     const html = await loadTemplate(template, data);
-
     // Configure email options
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.EMAIL_USERNAME,
@@ -70,7 +69,6 @@ const sendMail = async ({ to, subject, template, data }) => {
       subject,
       html,
     };
-
     // Send email without awaiting for result
     transporter
       .sendMail(mailOptions)
@@ -80,7 +78,6 @@ const sendMail = async ({ to, subject, template, data }) => {
       .catch((error) => {
         console.error(`Failed to send email to ${to}:`, error);
       });
-
     // Return immediately without waiting for email to be sent
     return true;
   } catch (error) {

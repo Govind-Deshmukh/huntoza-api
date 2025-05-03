@@ -103,7 +103,7 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// This ensures user plan is updated when payment is successful
+// In your payment.controller.js
 exports.verifyPayment = async (req, res) => {
   try {
     const {
@@ -113,7 +113,7 @@ exports.verifyPayment = async (req, res) => {
       transactionId,
     } = req.body;
 
-    // Verify the payment signature
+    // Verify signature - this is crucial!
     const isSignatureValid = razorpay.verifyPaymentSignature({
       orderId: razorpay_order_id,
       paymentId: razorpay_payment_id,
@@ -154,33 +154,6 @@ exports.verifyPayment = async (req, res) => {
     // Update user's plan
     user.currentPlan = transaction.plan;
     await user.save();
-
-    // Get plan details for email
-    const plan = await Plan.findById(transaction.plan);
-
-    // Send confirmation email
-    try {
-      await sendMail({
-        to: user.email,
-        subject: "Payment Successful - Subscription Activated",
-        template: "paymentSuccess",
-        data: {
-          name: user.name,
-          planName: plan.name,
-          amount: transaction.amount,
-          currency: transaction.currency,
-          billingType: transaction.billingType,
-          startDate: transaction.startDate.toLocaleDateString(),
-          endDate: transaction.endDate.toLocaleDateString(),
-          paymentId: razorpay_payment_id,
-          dashboardUrl: process.env.FRONTEND_URL + "/dashboard",
-          currentYear: new Date().getFullYear(),
-        },
-      });
-    } catch (emailError) {
-      console.error("Failed to send confirmation email:", emailError);
-      // Continue with the response even if email fails
-    }
 
     res.status(200).json({
       success: true,

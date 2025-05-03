@@ -103,7 +103,7 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// Verify payment after completion
+// This ensures user plan is updated when payment is successful
 exports.verifyPayment = async (req, res) => {
   try {
     const {
@@ -113,18 +113,6 @@ exports.verifyPayment = async (req, res) => {
       transactionId,
     } = req.body;
 
-    if (
-      !razorpay_order_id ||
-      !razorpay_payment_id ||
-      !razorpay_signature ||
-      !transactionId
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required payment verification parameters",
-      });
-    }
-
     // Verify the payment signature
     const isSignatureValid = razorpay.verifyPaymentSignature({
       orderId: razorpay_order_id,
@@ -133,96 +121,76 @@ exports.verifyPayment = async (req, res) => {
     });
 
     if (!isSignatureValid) {
-      // Log suspicious activity
-      console.warn(
-        `Invalid payment signature detected: ${razorpay_payment_id}`
-      );
       return res.status(400).json({
         success: false,
         message: "Payment verification failed. Invalid signature.",
       });
     }
 
-    // Get payment details from Razorpay
-    try {
-      const paymentDetails = await razorpay.getPaymentDetails(
-        razorpay_payment_id
-      );
-
-      // Find the transaction
-      const transaction = await Transaction.findById(transactionId);
-      if (!transaction) {
-        return res.status(404).json({
-          success: false,
-          message: "Transaction not found",
-        });
-      }
-
-      // Update transaction with payment details
-      transaction.paymentId = razorpay_payment_id;
-      transaction.razorpaySignature = razorpay_signature;
-      transaction.status =
-        paymentDetails.status === "captured" ? "completed" : "pending";
-      transaction.paymentMethod = paymentDetails.method || "";
-      await transaction.save();
-
-      // Find user and update plan
-      const user = await User.findById(transaction.user);
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
-      }
-
-      // Update user's plan
-      user.currentPlan = transaction.plan;
-      await user.save();
-
-      // Get plan details
-      const plan = await Plan.findById(transaction.plan);
-
-      // Send confirmation email asynchronously
-      try {
-        await sendMail({
-          to: user.email,
-          subject: "Payment Successful - Subscription Activated",
-          template: "paymentSuccess",
-          data: {
-            name: user.name,
-            planName: plan.name,
-            amount: transaction.amount,
-            currency: transaction.currency,
-            billingType: transaction.billingType,
-            startDate: transaction.startDate.toLocaleDateString(),
-            endDate: transaction.endDate.toLocaleDateString(),
-            paymentId: razorpay_payment_id,
-            dashboardUrl: process.env.FRONTEND_URL + "/dashboard",
-            currentYear: new Date().getFullYear(),
-          },
-        });
-      } catch (emailError) {
-        console.error("Failed to send confirmation email:", emailError);
-        // Continue with the response even if email fails
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "Payment verified successfully",
-        transaction: {
-          id: transaction._id,
-          status: transaction.status,
-          planId: transaction.plan,
-        },
-      });
-    } catch (error) {
-      console.error("Payment details error:", error);
-      res.status(500).json({
+    // Find the transaction
+    const transaction = await Transaction.findById(transactionId);
+    if (!transaction) {
+      return res.status(404).json({
         success: false,
-        message: "Failed to fetch payment details",
-        error: error.message,
+        message: "Transaction not found",
       });
     }
+
+    // Update transaction with payment details
+    transaction.paymentId = razorpay_payment_id;
+    transaction.razorpaySignature = razorpay_signature;
+    transaction.status = "completed";
+    await transaction.save();
+
+    // Find and update user's plan
+    const user = await User.findById(transaction.user);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Update user's plan
+    user.currentPlan = transaction.plan;
+    await user.save();
+
+    // Get plan details for email
+    const plan = await Plan.findById(transaction.plan);
+
+    // Send confirmation email
+    try {
+      await sendMail({
+        to: user.email,
+        subject: "Payment Successful - Subscription Activated",
+        template: "paymentSuccess",
+        data: {
+          name: user.name,
+          planName: plan.name,
+          amount: transaction.amount,
+          currency: transaction.currency,
+          billingType: transaction.billingType,
+          startDate: transaction.startDate.toLocaleDateString(),
+          endDate: transaction.endDate.toLocaleDateString(),
+          paymentId: razorpay_payment_id,
+          dashboardUrl: process.env.FRONTEND_URL + "/dashboard",
+          currentYear: new Date().getFullYear(),
+        },
+      });
+    } catch (emailError) {
+      console.error("Failed to send confirmation email:", emailError);
+      // Continue with the response even if email fails
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Payment verified successfully",
+      transaction: {
+        id: transaction._id,
+        status: transaction.status,
+        planId: transaction.plan,
+      },
+    });
   } catch (error) {
     console.error("Verify payment error:", error);
     res.status(500).json({

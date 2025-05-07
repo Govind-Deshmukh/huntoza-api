@@ -24,6 +24,7 @@ const analyticsRoutes = require("./v1/routes/analytics.routes");
 const publicProfileRoutes = require("./v1/routes/publicProfile.routes");
 const documentRoutes = require("./v1/routes/document.routes");
 const notificationRoutes = require("./v1/routes/notification.routes");
+const contactUsRoutes = require("./v1/routes/contactus.routes");
 
 // Create Express app
 const app = express();
@@ -95,6 +96,7 @@ app.use("/api/v1/analytics", analyticsRoutes);
 app.use("/api/v1/profiles", publicProfileRoutes);
 app.use("/api/v1/documents", documentRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/contactus", contactUsRoutes);
 
 // Health check route
 app.get("/api/health", (req, res) => {

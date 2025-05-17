@@ -4,20 +4,17 @@ const path = require("path");
 
 // Create email transporter
 const transporter = nodemailer.createTransport({
-  host: "mail.pentasynth.com",
-  port: process.env.SMTP_PORT,
-  secure: process.env.SMTP_SECURE === "true",
+  host: "smtppro.zoho.in",
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.SMTP_USERNAME,
-    pass: process.env.SMTP_PASSWORD,
+    user: "govind.deshmukh@pentasynth.com",
+    pass: "Govind@2357",
   },
 });
 
 /*
  * Load email template and replace placeholders with actual data
- * @param {string} templateName - The name of the template file (without extension)
- * @param {Object} replacements - Object containing key-value pairs for replacements
- * @returns {Promise<string>} - HTML content of the email
  */
 const loadTemplate = async (templateName, replacements) => {
   try {
@@ -28,7 +25,6 @@ const loadTemplate = async (templateName, replacements) => {
     );
     let template = await fs.readFile(templatePath, "utf8");
 
-    // Replace all placeholders with values
     if (replacements) {
       Object.keys(replacements).forEach((key) => {
         const regex = new RegExp(`{{${key}}}`, "g");
@@ -38,51 +34,37 @@ const loadTemplate = async (templateName, replacements) => {
 
     return template;
   } catch (error) {
-    console.error(`Error loading email template ${templateName}:`, error);
+    console.error(`Error loading email template '${templateName}':`, error);
     throw error;
   }
 };
 
 /**
- * Send email asynchronously without waiting for response
- * @param {Object} options - Email options
- * @param {string} options.to - Recipient email
- * @param {string} options.subject - Email subject
- * @param {string} options.template - Template name
- * @param {Object} options.data - Data for template placeholders
- * @returns {Promise<void>}
+ * Send email with template and data
  */
 const sendMail = async ({ to, subject, template, data }) => {
   try {
-    // Load and process template
     if (process.env.EMAIL_ENABLED !== "true") {
       console.log(
         `[EMAIL DISABLED] Would have sent email to ${to}: ${subject}`
       );
-      return true; // Return success without sending
+      return true;
     }
+
     const html = await loadTemplate(template, data);
-    // Configure email options
     const mailOptions = {
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USERNAME,
+      from: `"Pursuit Pal" <govind.deshmukh@pentasynth.com>`,
       to,
       subject,
       html,
+      text: "This is a fallback plain-text email.",
     };
-    // Send email without awaiting for result
-    transporter
-      .sendMail(mailOptions)
-      .then((info) => {
-        console.log(`Email sent to ${to}: ${info.messageId}`);
-      })
-      .catch((error) => {
-        console.error(`Failed to send email to ${to}:`, error);
-      });
-    // Return immediately without waiting for email to be sent
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${to}: ${info.messageId}`);
     return true;
   } catch (error) {
-    console.error("Send mail error:", error);
-    // Even if there's an error, we don't want to block the response
+    console.error("Failed to send email:", error.message || error);
     return false;
   }
 };

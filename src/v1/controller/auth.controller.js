@@ -215,7 +215,6 @@ exports.refreshToken = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-
     if (!email) {
       return res.status(400).json({
         success: false,
@@ -237,11 +236,16 @@ exports.forgotPassword = async (req, res) => {
     // Generate reset token
     const resetToken = crypto.randomBytes(20).toString("hex");
 
-    // Hash token and save to user
+    // Define the secret key to use for hashing
+    const secret =
+      process.env.RESET_TOKEN_SECRET || process.env.JWT_SECRET || "oV2sB0LuXgP";
+
+    // Hash token and save to user - FIXED: added the secret as second parameter
     user.resetPasswordToken = crypto
-      .createHmac("sha256")
+      .createHmac("sha256", secret)
       .update(resetToken)
       .digest("hex");
+
     user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
     await user.save();
 

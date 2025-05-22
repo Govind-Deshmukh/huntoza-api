@@ -5,16 +5,17 @@ const dotenv = require("dotenv");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const helmet = require("helmet");
+const cookieParser = require("cookie-parser"); // Add this
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpecs = require("./config/swagger");
 const fs = require("fs");
-const scheduler = require("./utils/scheduler"); // Import scheduler
+const scheduler = require("./utils/scheduler");
 
 // Load environment variables
 dotenv.config();
 
 // Import routes
-const authRoutes = require("./v1/routes/auth.routes");
+const authRoutes = require("./v2/routes/auth.routes");
 const jobRoutes = require("./v1/routes/job.routes");
 const taskRoutes = require("./v1/routes/task.routes");
 const contactRoutes = require("./v1/routes/contact.routes");
@@ -31,9 +32,20 @@ const app = express();
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+
+// CORS configuration for cookies
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true, // Important for cookies
+    optionsSuccessStatus: 200,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // Add cookie parser middleware
+
 app.use(
   fileUpload({
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max file size

@@ -65,6 +65,15 @@ exports.getCurrentPlan = async (req, res) => {
       });
     }
 
+    // Check if user has a currentPlan
+    if (!user.currentPlan) {
+      return res.status(200).json({
+        success: true,
+        plan: null,
+        subscription: null,
+      });
+    }
+
     // Get the latest active transaction for this plan
     const latestTransaction = await Transaction.findOne({
       user: user._id,

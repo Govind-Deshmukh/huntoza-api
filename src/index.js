@@ -36,9 +36,9 @@ app.use(helmet());
 // CORS configuration for cookies
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    credentials: true, // Important for cookies
-    optionsSuccessStatus: 200,
+    origin: "http://localhost:3000",
+    credentials: true, // Allow cookies to be sent
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   })
 );
 
